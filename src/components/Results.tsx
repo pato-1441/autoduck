@@ -1,5 +1,8 @@
 import { useState } from "react";
+import { Check, X, Clock, Eye } from "lucide-react";
+import { cn } from "../utils/classnames";
 import { TestStep } from "../types";
+
 interface ResultsScreenProps {
   results: any;
   steps: TestStep[];
@@ -24,7 +27,7 @@ function ResultsScreen({
           </h2>
           <button
             onClick={onBackToCreation}
-            className="px-4 py-2 mt-4 text-white bg-cyan-600 rounded-lg hover:bg-cyan-700"
+            className="px-4 py-2 mt-4 text-white bg-cyan-600 rounded-lg hover:bg-cyan-700 text-base"
           >
             Back to Test Creation
           </button>
@@ -62,41 +65,73 @@ function ResultsScreen({
         <div className="flex flex-col w-1/2 pr-4 overflow-hidden">
           <h2 className="mb-4 text-lg font-medium text-gray-900">Test Steps</h2>
           <div className="flex-1 overflow-y-auto">
-            <ul className="space-y-2">
+            <div className="space-y-2">
               {steps.map((step, index) => (
-                <li
-                  key={index}
-                  className={`p-3 rounded-lg shadow-sm cursor-pointer ${
-                    selectedStep === index
-                      ? "bg-cyan-50 border border-cyan-200"
-                      : "bg-white"
-                  } ${
-                    stepResults[index]?.passed
-                      ? "border-l-4 border-l-green-500"
-                      : "border-l-4 border-l-red-500"
-                  }`}
+                <div
+                  key={step.id}
+                  className={cn(
+                    "rounded-lg border p-3 cursor-pointer transition-all duration-200",
+                    {
+                      "border-green-200 bg-green-50/50":
+                        step.status === "success",
+                      "border-red-200 bg-red-50/50": step.status === "error",
+                      "border-amber-200 bg-amber-50/50":
+                        step.status === "pending",
+                      "border-cyan-500 bg-cyan-500/50": selectedStep === index,
+                    }
+                  )}
                   onClick={() => setSelectedStep(index)}
                 >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <span className="font-medium text-gray-700">
-                        Step {index + 1}:
-                      </span>{" "}
-                      {step.description}
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-0.5">
+                      {step.status === "success" && (
+                        <Check className="h-5 w-5 text-green-600" />
+                      )}
+                      {step.status === "error" && (
+                        <X className="h-5 w-5 text-red-600" />
+                      )}
+                      {step.status === "pending" && (
+                        <Clock className="h-5 w-5 text-amber-600" />
+                      )}
                     </div>
-                    <div
-                      className={`ml-2 ${
-                        stepResults[index]?.passed
-                          ? "text-green-500"
-                          : "text-red-500"
-                      }`}
-                    >
-                      {stepResults[index]?.passed ? "✓" : "✗"}
+
+                    <div className="flex-grow">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium">
+                          {index + 1}. {step.description}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          {stepResults[index]?.screenshot && (
+                            <button
+                              onClick={() =>
+                                window.open(
+                                  `data:image/png;base64,${stepResults[index].screenshot}`,
+                                  "_blank"
+                                )
+                              }
+                              className="p-1 rounded-lg hover:bg-gray-100 transition-colors"
+                              title="View Screenshot"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {step.error && (
+                        <div className="mt-2 p-2 rounded bg-gray-100 text-sm overflow-x-auto">
+                          <pre className="whitespace-pre-wrap">
+                            {typeof step.error === "object"
+                              ? JSON.stringify(step.error, null, 2)
+                              : step.error}
+                          </pre>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
         </div>
 
@@ -165,15 +200,15 @@ function ResultsScreen({
           <div className="flex justify-between mt-4 space-x-4">
             <button
               onClick={onBackToCreation}
-              className="px-4 py-2 text-cyan-600 bg-white border border-cyan-600 rounded-lg hover:bg-cyan-50"
+              className="px-3 py-1.5 text-cyan-600 bg-white border border-cyan-600 rounded-lg hover:bg-cyan-50 text-sm hover:cursor-pointer"
             >
-              Back to Test Creation
+              Back to test creation
             </button>
             <button
               onClick={onReset}
-              className="px-4 py-2 text-white bg-cyan-600 rounded-lg hover:bg-cyan-700"
+              className="px-3 py-1.5 text-white bg-cyan-600 rounded-lg hover:bg-cyan-700 text-sm hover:cursor-pointer"
             >
-              Start New Test
+              Start new test
             </button>
           </div>
         </div>
