@@ -2,6 +2,8 @@
 /backend/videos*
 /backend/screenshots*
 
+.env*
+
 
 # Logs
 logs

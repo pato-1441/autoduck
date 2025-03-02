@@ -7,6 +7,8 @@ interface UseTestSocketProps {
   onComplete: (steps: TestStep[], results: any) => void;
 }
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL as string;
+
 export function useTestSocket({ steps, onComplete }: UseTestSocketProps) {
   const socketRef = useRef<Socket | null>(null);
   const [browserImage, setBrowserImage] = useState<string | null>(null);
@@ -24,8 +26,7 @@ export function useTestSocket({ steps, onComplete }: UseTestSocketProps) {
   }, [testSteps]);
 
   useEffect(() => {
-    // Initialize socket connection
-    socketRef.current = io("http://localhost:3001");
+    socketRef.current = io(BACKEND_URL || "http://localhost:3001");
 
     const handleBrowserUpdate = (data: any) => {
       if (data.screenshot) {
