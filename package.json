@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc -b && vite build",
+    "build:back": "cd backend && pnpm build",
     "start": "vite start",
     "lint": "eslint .",
     "preview": "vite preview",
