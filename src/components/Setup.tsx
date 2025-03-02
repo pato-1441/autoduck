@@ -5,9 +5,7 @@ interface SetupScreenProps {
 }
 
 function SetupScreen({ onSubmit }: SetupScreenProps) {
-  const [apiKey, setApiKey] = useState(
-    "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"
-  );
+  const [apiKey, setApiKey] = useState("");
   const [targetUrl, setTargetUrl] = useState(
     "https://www.scrapethissite.com/pages/"
   );
