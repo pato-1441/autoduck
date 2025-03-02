@@ -1,10 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
-import { TestStep } from "../types";
+import {
+  TestStep,
+  TestResult,
+  BrowserUpdate,
+  StepUpdateData,
+  TestConfig,
+} from "../types";
 
 interface UseTestSocketProps {
   steps: TestStep[];
-  onComplete: (steps: TestStep[], results: any) => void;
+  onComplete: (steps: TestStep[], results: TestResult) => void;
 }
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL as string;
@@ -14,12 +20,11 @@ export function useTestSocket({ steps, onComplete }: UseTestSocketProps) {
   const [browserImage, setBrowserImage] = useState<string | null>(null);
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
-  const [results, setResults] = useState<any>(null);
+  const [results, setResults] = useState<TestResult | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(-1);
   const [testSteps, setTestSteps] = useState<TestStep[]>(steps);
 
-  // Reference to maintain latest steps without re-renders
   const stepsRef = useRef(testSteps);
   useEffect(() => {
     stepsRef.current = testSteps;
@@ -28,14 +33,14 @@ export function useTestSocket({ steps, onComplete }: UseTestSocketProps) {
   useEffect(() => {
     socketRef.current = io(BACKEND_URL || "http://localhost:3001");
 
-    const handleBrowserUpdate = (data: any) => {
+    const handleBrowserUpdate = (data: BrowserUpdate) => {
       if (data.screenshot) {
         setBrowserImage(`data:image/png;base64,${data.screenshot}`);
       }
       setStatus(data.status);
     };
 
-    const handleTestComplete = (data: any) => {
+    const handleTestComplete = (data: TestResult) => {
       setIsRunning(false);
       setResults(data);
       setCurrentStepIndex(-1);
@@ -44,16 +49,18 @@ export function useTestSocket({ steps, onComplete }: UseTestSocketProps) {
 
       const updatedSteps = stepsRef.current.map((step, index) => ({
         ...step,
-        status: data.stepResults[index]?.passed ? "success" : "error",
+        status: data.stepResults[index]?.passed
+          ? ("success" as const)
+          : ("error" as const),
         error: data.stepResults[index]?.error
           ? String(data.stepResults[index]?.error)
           : null,
-        screenshot: data.stepResults[index]?.screenshot || null,
-        code: data.stepResults[index]?.code || null,
-        duration: data.stepResults[index]?.duration || null,
+        screenshot: data.stepResults[index]?.screenshot || undefined,
+        code: data.stepResults[index]?.code || undefined,
+        duration: data.stepResults[index]?.duration || undefined,
       }));
 
-      setTestSteps(updatedSteps);
+      setTestSteps(updatedSteps as TestStep[]);
       onComplete(updatedSteps, data);
     };
 
@@ -62,11 +69,7 @@ export function useTestSocket({ steps, onComplete }: UseTestSocketProps) {
       setIsRunning(false);
     };
 
-    const handleStepUpdate = (data: {
-      index: number;
-      status: string;
-      error?: any;
-    }) => {
+    const handleStepUpdate = (data: StepUpdateData) => {
       setCurrentStepIndex(data.index);
       setTestSteps((prev) =>
         prev.map((step, i) =>
@@ -74,7 +77,7 @@ export function useTestSocket({ steps, onComplete }: UseTestSocketProps) {
             ? {
                 ...step,
                 status: data.status,
-                error: data.error ? String(data.error) : undefined,
+                error: data.error ? String(data.error) : null,
               }
             : step
         )
@@ -94,7 +97,7 @@ export function useTestSocket({ steps, onComplete }: UseTestSocketProps) {
     };
   }, [onComplete]);
 
-  const runTests = (config: { apiKey: string; targetUrl: string }) => {
+  const runTests = (config: TestConfig) => {
     if (testSteps.length === 0) {
       setError("Please add at least one test step");
       return;
@@ -109,7 +112,7 @@ export function useTestSocket({ steps, onComplete }: UseTestSocketProps) {
     const initialSteps = testSteps.map((step) => ({
       ...step,
       status: "pending" as const,
-      error: undefined,
+      error: null,
     }));
     setTestSteps(initialSteps);
 

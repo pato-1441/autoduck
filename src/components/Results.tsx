@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Check, X, Clock, Eye } from "lucide-react";
 import { cn } from "../utils/classnames";
-import { TestStep } from "../types";
+import { TestStep, TestResult } from "../types";
 
 interface ResultsScreenProps {
-  results: any;
+  results: TestResult | null;
   steps: TestStep[];
   onBackToCreation: () => void;
   onReset: () => void;
@@ -43,7 +43,9 @@ function ResultsScreen({
       <header className="px-4 py-4 bg-white shadow sm:px-6">
         <div className="flex items-center justify-between">
           <img className="max-w-8 max-h-8" src="/favicon.png" />
-          <h1 className="text-xl font-bold text-gray-800">Autoduck - Results</h1>
+          <h1 className="text-xl font-bold text-gray-800">
+            Autoduck - Results
+          </h1>
           <div className="flex items-center space-x-4">
             <span
               className={`px-2 py-1 text-sm font-medium rounded-full ${

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { TestStep } from "../types";
+import { TestStep, TestResult } from "../types";
 import { useTestSocket } from "../hooks/useTestSocket";
 import Header from "./TestCreation/Header";
 import StepInput from "./TestCreation/StepInput";
@@ -12,7 +12,7 @@ interface TestCreationScreenProps {
     apiKey: string;
     targetUrl: string;
   };
-  onComplete: (steps: TestStep[], results: any) => void;
+  onComplete: (steps: TestStep[], results: TestResult) => void;
 }
 
 function TestCreationScreen({ config, onComplete }: TestCreationScreenProps) {
@@ -30,7 +30,7 @@ function TestCreationScreen({ config, onComplete }: TestCreationScreenProps) {
     stopTest,
     setTestSteps,
   } = useTestSocket({
-    steps: [], // Initial empty steps
+    steps: [],
     onComplete,
   });
 
@@ -40,6 +40,7 @@ function TestCreationScreen({ config, onComplete }: TestCreationScreenProps) {
         id: `step-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
         description: currentStepInput.trim(),
         status: "pending",
+        error: null,
       };
 
       setTestSteps((prev) => [...prev, newStep]);
