@@ -1,5 +1,6 @@
 const browserManager = require("./browserService");
 const aiService = require("./aiService");
+const testUtils = require("../utils/testUtils");
 
 const setupSocketHandlers = (io) => {
   io.on("connection", async (socket) => {
@@ -53,6 +54,8 @@ const setupSocketHandlers = (io) => {
               step,
               htmlSummary
             );
+
+            const result = await testUtils.executeStep(page, code);
 
             if (!result.success) {
               throw new Error(result.error || "Step execution failed");
