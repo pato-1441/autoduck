@@ -23,7 +23,11 @@ const io = new Server(server, {
   },
 });
 
-app.use(cors());
+app.use(
+  cors({
+    origin: ["https://autoduck-v1.netlify.app"],
+  })
+);
 app.use(express.json());
 
 const activeBrowsers = new Map();
@@ -49,7 +53,6 @@ io.on("connection", async (socket) => {
       const openai = new OpenAI({ apiKey });
       const browser = await chromium.launch();
       const context = await browser.newContext({
-        recordVideo: { dir: "videos/" },
         viewport: { width: 1920, height: 1080 },
         deviceScaleFactor: 1,
       });
