@@ -80,7 +80,6 @@ export function useTestSocket({ steps, onComplete }: UseTestSocketProps) {
       );
     };
 
-    // Setup event listeners
     socketRef.current.on("connect", () =>
       console.log("Connected to WS server")
     );
@@ -89,7 +88,6 @@ export function useTestSocket({ steps, onComplete }: UseTestSocketProps) {
     socketRef.current.on("test-error", handleTestError);
     socketRef.current.on("step-update", handleStepUpdate);
 
-    // Cleanup on unmount
     return () => {
       socketRef.current?.disconnect();
     };
@@ -106,7 +104,7 @@ export function useTestSocket({ steps, onComplete }: UseTestSocketProps) {
     setStatus("starting");
     setCurrentStepIndex(0);
 
-    // Initialize steps with pending status
+    // steps with pending status
     const initialSteps = testSteps.map((step) => ({
       ...step,
       status: "pending" as const,
@@ -114,7 +112,7 @@ export function useTestSocket({ steps, onComplete }: UseTestSocketProps) {
     }));
     setTestSteps(initialSteps);
 
-    // Emit test run event
+    // run tests
     socketRef.current?.emit("run-tests", {
       apiKey: config.apiKey,
       targetUrl: config.targetUrl,

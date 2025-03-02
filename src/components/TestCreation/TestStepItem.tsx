@@ -1,5 +1,5 @@
 import React from "react";
-import { Check, X, Clock, Eye, ChevronDown, ChevronRight } from "lucide-react";
+import { Check, X, Clock, ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "../../utils/classnames";
 import { TestStep } from "../../types";
 
@@ -11,7 +11,6 @@ interface TestStepItemProps {
   isRunning: boolean;
   toggleExpand: (id: string) => void;
   removeStep: (id: string) => void;
-  viewScreenshot: (url: string) => void;
 }
 
 const TestStepItem: React.FC<TestStepItemProps> = ({
@@ -22,14 +21,7 @@ const TestStepItem: React.FC<TestStepItemProps> = ({
   isRunning,
   toggleExpand,
   removeStep,
-  viewScreenshot,
 }) => {
-  const errorMessage = step.error
-    ? typeof step.error === "string"
-      ? step.error
-      : JSON.stringify(step.error, null, 2)
-    : "";
-
   return (
     <div
       className={cn(
@@ -61,16 +53,6 @@ const TestStepItem: React.FC<TestStepItemProps> = ({
             </p>
 
             <div className="flex items-center gap-2">
-              {step.screenshotUrl && (
-                <button
-                  onClick={() => viewScreenshot(step.screenshotUrl!)}
-                  className="p-1 rounded-lg hover:bg-gray-100 transition-colors"
-                  title="View Screenshot"
-                >
-                  <Eye className="h-4 w-4" />
-                </button>
-              )}
-
               {!isRunning && (
                 <button
                   onClick={() => removeStep(step.id)}

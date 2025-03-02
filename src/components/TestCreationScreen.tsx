@@ -24,7 +24,6 @@ function TestCreationScreen({ config, onComplete }: TestCreationScreenProps) {
     browserImage,
     status,
     error,
-    results,
     steps,
     currentStepIndex,
     runTests,

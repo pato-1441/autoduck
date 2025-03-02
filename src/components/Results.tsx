@@ -22,7 +22,7 @@ function ResultsScreen({
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <h2 className="text-xl font-medium text-gray-900">
+          <h2 className="text-xl font-medium text-gray-800">
             No test results available
           </h2>
           <button
@@ -42,7 +42,8 @@ function ResultsScreen({
     <div className="flex flex-col min-h-screen bg-gray-50">
       <header className="px-4 py-4 bg-white shadow sm:px-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-900">Test Results</h1>
+          <img className="max-w-8 max-h-8" src="/favicon.png" />
+          <h1 className="text-xl font-bold text-gray-800">Autoduck - Results</h1>
           <div className="flex items-center space-x-4">
             <span
               className={`px-2 py-1 text-sm font-medium rounded-full ${
@@ -63,7 +64,7 @@ function ResultsScreen({
       <div className="flex flex-1 p-4 overflow-hidden sm:p-6">
         {/* Left panel - Test steps */}
         <div className="flex flex-col w-1/2 pr-4 overflow-hidden">
-          <h2 className="mb-4 text-lg font-medium text-gray-900">Test Steps</h2>
+          <h2 className="mb-4 text-lg font-medium text-gray-800">Test Steps</h2>
           <div className="flex-1 overflow-y-auto">
             <div className="space-y-2">
               {steps.map((step, index) => (
@@ -100,22 +101,7 @@ function ResultsScreen({
                         <p className="text-sm font-medium">
                           {index + 1}. {step.description}
                         </p>
-                        <div className="flex items-center gap-2">
-                          {stepResults[index]?.screenshot && (
-                            <button
-                              onClick={() =>
-                                window.open(
-                                  `data:image/png;base64,${stepResults[index].screenshot}`,
-                                  "_blank"
-                                )
-                              }
-                              className="p-1 rounded-lg hover:bg-gray-100 transition-colors"
-                              title="View Screenshot"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </button>
-                          )}
-                        </div>
+                        <Eye className="h-4 w-4" />
                       </div>
 
                       {step.error && (
@@ -137,14 +123,14 @@ function ResultsScreen({
 
         {/* Right panel - Step details */}
         <div className="flex flex-col w-1/2 pl-4 overflow-hidden">
-          <h2 className="mb-4 text-lg font-medium text-gray-900">
+          <h2 className="mb-4 text-lg font-medium text-gray-800">
             Step Details
           </h2>
           <div className="flex-1 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-sm">
             {stepResults[selectedStep] ? (
               <div className="p-4">
                 <div className="mb-4">
-                  <h3 className="text-md font-medium text-gray-900">
+                  <h3 className="text-md font-medium text-gray-800">
                     {steps[selectedStep].description}
                   </h3>
                   <div

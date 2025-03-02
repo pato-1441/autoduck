@@ -172,12 +172,12 @@ io.on("connection", async (socket) => {
         } catch (error) {
           allPassed = false;
           const errorScreenshot = await page.screenshot({ type: "png" });
-          const errorMessage = error.message || error.toString(); // Add this line
+          const errorMessage = error.message || error.toString();
 
           stepResults.push({
             passed: false,
             duration: Date.now() - stepStartTime,
-            error: errorMessage, // Use here
+            error: errorMessage,
             screenshot: errorScreenshot.toString("base64"),
             code: error.code || "N/A",
           });
@@ -186,13 +186,13 @@ io.on("connection", async (socket) => {
             status: "step-failed",
             screenshot: errorScreenshot.toString("base64"),
             stepIndex: i,
-            error: errorMessage, // And here
+            error: errorMessage,
           });
 
           socket.emit("step-update", {
             index: i,
             status: "error",
-            error: errorMessage, // And here
+            error: errorMessage,
           });
         }
       }

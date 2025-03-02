@@ -31,9 +31,6 @@ const TestStepsList: React.FC<TestStepsListProps> = ({
           isRunning={isRunning}
           toggleExpand={toggleExpand}
           removeStep={removeStep}
-          viewScreenshot={(url) => {
-            /* Implement screenshot viewing */
-          }}
         />
       ))}
     </div>

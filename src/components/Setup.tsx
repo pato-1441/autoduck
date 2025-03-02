@@ -24,7 +24,6 @@ function SetupScreen({ onSubmit }: SetupScreenProps) {
       return;
     }
 
-    // Simple URL validation
     try {
       new URL(targetUrl);
       onSubmit(apiKey, targetUrl);
@@ -38,7 +37,7 @@ function SetupScreen({ onSubmit }: SetupScreenProps) {
     <div className="flex items-center justify-center min-h-screen p-4">
       <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Autoduck</h1>
+          <h1 className="text-3xl font-bold text-gray-800">Autoduck</h1>
           <p className="mt-2 text-gray-600">Configure before starting</p>
         </div>
 
