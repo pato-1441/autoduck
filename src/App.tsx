@@ -41,7 +41,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 bg-[url('./background.jpg')] bg-cover bg-center font-[Inter]">
+    <div className="min-h-screen bg-gray-50 bg-[url('/background.jpg')] bg-cover bg-center font-[Inter]">
       {currentScreen === "setup" && (
         <SetupScreen onSubmit={handleConfigSubmit} />
       )}
