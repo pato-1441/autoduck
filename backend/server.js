@@ -20,6 +20,13 @@ app.use(express.json());
 
 const activeBrowsers = new Map();
 
+app.get("/debug/connections", (req, res) => {
+  res.json({
+    connections: io.engine.clientsCount,
+    activeBrowsers: Array.from(activeBrowsers.keys()),
+  });
+});
+
 io.on("connection", async (socket) => {
   console.log("Client connected:", socket.id);
 
@@ -77,6 +84,12 @@ io.on("connection", async (socket) => {
         socket.emit("browser-update", {
           status: "running",
           message: `Running step ${i + 1}: ${step}`,
+          stepIndex: i,
+        });
+
+        console.log(`Emitting browser-update for step ${i + 1}`, {
+          status: "running",
+          stepIndex: i,
         });
 
         try {
@@ -152,6 +165,16 @@ io.on("connection", async (socket) => {
             screenshot: stepScreenshot.toString("base64"),
             stepIndex: i,
           });
+
+          socket.emit("step-update", {
+            index: i,
+            status: "success",
+            error: null,
+          });
+          console.log(`Emitting step-update for successful step ${i + 1}`, {
+            index: i,
+            status: "success",
+          });
         } catch (error) {
           console.error(`Error executing step ${i + 1}:`, error);
 
@@ -174,8 +197,27 @@ io.on("connection", async (socket) => {
             stepIndex: i,
             error: error.message,
           });
+
+          socket.emit("step-update", {
+            index: i,
+            status: error ? "error" : "running",
+            error: error ? error.message : null,
+          });
+          console.log(`Emitting step-update for failed step ${i + 1}`, {
+            index: i,
+            status: "error",
+            error: error.message,
+          });
         }
       }
+
+      console.log("Emitting test-complete with results:", {
+        passed: allPassed,
+        stepResults: stepResults.map((s) => ({
+          passed: s.passed,
+          error: s.error || null,
+        })),
+      });
 
       socket.emit("test-complete", {
         passed: allPassed,
@@ -194,6 +236,20 @@ io.on("connection", async (socket) => {
         await browserContext.browser.close();
         activeBrowsers.delete(socket.id);
       }
+    }
+  });
+
+  socket.on("stop-test", async () => {
+    console.log("Received stop-test request from client");
+
+    const browserContext = activeBrowsers.get(socket.id);
+    if (browserContext) {
+      console.log("Closing browser for stopped test");
+      await browserContext.browser.close();
+      activeBrowsers.delete(socket.id);
+      socket.emit("test-error", { message: "Test stopped by user" });
+    } else {
+      console.log("No active browser found to stop");
     }
   });
 

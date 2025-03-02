@@ -1,4 +1,4 @@
-export const PLAYWRIGHT_PROMPT = `You are an expert in Playwright test automation. Convert the natural language test step into valid Playwright JavaScript code.
+const PLAYWRIGHT_PROMPT = `You are an expert in Playwright test automation. Convert the natural language test step into valid Playwright JavaScript code.
                 Return ONLY the executable code, no explanations or markdown. The code should be a SIMPLE JavaScript expression that uses the 'page' object.
                 DO NOT use assertion libraries like 'expect' or 'assert'.
                 DO NOT include 'await' at the beginning - it will be added later.
@@ -14,3 +14,7 @@ export const PLAYWRIGHT_PROMPT = `You are an expert in Playwright test automatio
                 
                 Input: "Check if login was successful"
                 Output: page.waitForSelector('.dashboard, .welcome-message, .user-profile', { timeout: 15000 })`;
+
+module.exports = {
+  PLAYWRIGHT_PROMPT,
+};
