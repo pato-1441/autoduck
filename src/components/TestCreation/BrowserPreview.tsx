@@ -15,7 +15,7 @@ const BrowserPreview: React.FC<BrowserPreviewProps> = ({
 }) => {
   return (
     <div className="flex flex-col w-full h-full">
-      <div className="flex-1 overflow-hidden bg-white border border-gray-300 rounded-md shadow-sm">
+      <div className="flex-1 overflow-hidden bg-white border border-gray-300 rounded-lg shadow-sm">
         <div className="flex items-center justify-between p-2 border-b border-gray-300 bg-gray-50">
           <div className="flex items-center space-x-2 ml-2">
             <div className="w-3 h-3 bg-red-500 rounded-full"></div>
@@ -44,7 +44,7 @@ const BrowserPreview: React.FC<BrowserPreviewProps> = ({
           )}
           {isRunning && status !== "complete" && (
             <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20">
-              <div className="w-8 h-8 border-4 border-t-indigo-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
+              <div className="w-8 h-8 border-4 border-t-cyan-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
             </div>
           )}
         </div>

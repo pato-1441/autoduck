@@ -30,12 +30,12 @@ const Header: React.FC<HeaderProps> = ({
             <span className="text-sm text-gray-500">
               Testing:{" "}
               <a
-                className="text-gray-800"
+                className="rounded-full px-2 py-0.5 border border-gray-300/50 text-gray-800"
                 target="_blank"
                 rel="noopener noreferrer"
                 href={targetUrl}
               >
-                {targetUrl}
+                {targetUrl.split(".")[1]}
               </a>
             </span>
           </div>
