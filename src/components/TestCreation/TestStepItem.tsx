@@ -30,7 +30,7 @@ const TestStepItem: React.FC<TestStepItemProps> = ({
           "border-green-200 bg-green-50/50": step.status === "success",
           "border-red-200 bg-red-50/50": step.status === "error",
           "border-amber-200 bg-amber-50/50": step.status === "pending",
-          "border-cyan-500 bg-cyan-500/50": isActive,
+          "border-cyan-500 bg-cyan-500/10": isActive,
         }
       )}
       style={{ animationDelay: `${index * 100}ms` }}
