@@ -1,6 +1,6 @@
 import React from "react";
-import TestStepItem from "./TestStepItem";
 import { TestStep } from "../../types";
+import TestStepItem from "./TestStepItem";
 
 interface TestStepsListProps {
   steps: TestStep[];
@@ -9,7 +9,6 @@ interface TestStepsListProps {
   isRunning: boolean;
   toggleExpand: (id: string) => void;
   removeStep: (id: string) => void;
-  viewScreenshot: (url: string) => void;
 }
 
 const TestStepsList: React.FC<TestStepsListProps> = ({
@@ -19,32 +18,25 @@ const TestStepsList: React.FC<TestStepsListProps> = ({
   isRunning,
   toggleExpand,
   removeStep,
-  viewScreenshot,
 }) => {
-  if (steps.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-full text-gray-400">
-        Add test steps to get started
-      </div>
-    );
-  }
-
   return (
-    <ul className="space-y-2">
+    <div className="space-y-2">
       {steps.map((step, index) => (
         <TestStepItem
           key={step.id}
           step={step}
           index={index}
           isExpanded={expandedSteps.includes(step.id)}
-          isActive={index === currentStepIndex}
+          isActive={currentStepIndex === index}
           isRunning={isRunning}
           toggleExpand={toggleExpand}
           removeStep={removeStep}
-          viewScreenshot={viewScreenshot}
+          viewScreenshot={(url) => {
+            /* Implement screenshot viewing */
+          }}
         />
       ))}
-    </ul>
+    </div>
   );
 };
 

@@ -2,6 +2,7 @@ import { useState } from "react";
 import SetupScreen from "./components/Setup.tsx";
 import TestCreationScreen from "./components/TestCreationScreen.tsx";
 import ResultsScreen from "./components/Results.tsx";
+import { TestStep } from "./types/index.ts";
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState<
@@ -11,7 +12,7 @@ function App() {
     apiKey: "",
     targetUrl: "",
   });
-  const [testSteps, setTestSteps] = useState<string[]>([]);
+  const [testSteps, setTestSteps] = useState<TestStep[]>([]);
   const [testResults, setTestResults] = useState<any>(null);
 
   const handleConfigSubmit = (apiKey: string, targetUrl: string) => {
@@ -19,7 +20,8 @@ function App() {
     setCurrentScreen("creation");
   };
 
-  const handleTestCreationComplete = (steps: string[], results: any) => {
+  const handleTestCreationComplete = (steps: TestStep[], results: any) => {
+    console.log({ steps, results });
     setTestSteps(steps);
     setTestResults(results);
     setCurrentScreen("results");

@@ -24,6 +24,12 @@ const TestStepItem: React.FC<TestStepItemProps> = ({
   removeStep,
   viewScreenshot,
 }) => {
+  const errorMessage = step.error
+    ? typeof step.error === "string"
+      ? step.error
+      : JSON.stringify(step.error, null, 2)
+    : "";
+
   return (
     <div
       className={cn(
@@ -91,7 +97,11 @@ const TestStepItem: React.FC<TestStepItemProps> = ({
 
           {isExpanded && step.error && (
             <div className="mt-2 p-2 rounded bg-gray-100 text-sm overflow-x-auto">
-              <pre className="whitespace-pre-wrap">{step.error}</pre>
+              <pre className="whitespace-pre-wrap">
+                {typeof step.error === "object"
+                  ? JSON.stringify(step.error, null, 2)
+                  : step.error}
+              </pre>
             </div>
           )}
         </div>

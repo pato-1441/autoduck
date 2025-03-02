@@ -1,8 +1,8 @@
 import { useState } from "react";
-
+import { TestStep } from "../types";
 interface ResultsScreenProps {
   results: any;
-  steps: string[];
+  steps: TestStep[];
   onBackToCreation: () => void;
   onReset: () => void;
 }
@@ -82,7 +82,7 @@ function ResultsScreen({
                       <span className="font-medium text-gray-700">
                         Step {index + 1}:
                       </span>{" "}
-                      {step}
+                      {step.description}
                     </div>
                     <div
                       className={`ml-2 ${
@@ -110,7 +110,7 @@ function ResultsScreen({
               <div className="p-4">
                 <div className="mb-4">
                   <h3 className="text-md font-medium text-gray-900">
-                    {steps[selectedStep]}
+                    {steps[selectedStep].description}
                   </h3>
                   <div
                     className={`mt-1 text-sm ${

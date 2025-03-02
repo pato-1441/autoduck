@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { TestStep } from "../types";
 import { useTestSocket } from "../hooks/useTestSocket";
-
 import Header from "./TestCreation/Header";
 import StepInput from "./TestCreation/StepInput";
 import TestStepsList from "./TestCreation/TestStepsList";
@@ -17,80 +16,52 @@ interface TestCreationScreenProps {
 }
 
 function TestCreationScreen({ config, onComplete }: TestCreationScreenProps) {
-  const [currentStep, setCurrentStep] = useState("");
-  const [steps, setSteps] = useState<TestStep[]>([]);
+  const [currentStepInput, setCurrentStepInput] = useState("");
   const [expandedSteps, setExpandedSteps] = useState<string[]>([]);
-  const [currentStepIndex, setCurrentStepIndex] = useState<number>(-1);
 
   const {
     isRunning,
     browserImage,
     status,
     error,
-    runTests: initiateTests,
-    stopTest,
-    steps: updatedSteps,
-    expandedSteps: updatedExpandedSteps,
-    currentStepIndex: updatedCurrentStepIndex,
-    setUpdatedSteps,
-    setUpdatedExpandedSteps,
-    setUpdatedCurrentStepIndex,
-  } = useTestSocket({
+    results,
     steps,
-    expandedSteps,
     currentStepIndex,
+    runTests,
+    stopTest,
+    setTestSteps,
+  } = useTestSocket({
+    steps: [], // Initial empty steps
     onComplete,
   });
 
-  if (steps !== updatedSteps) {
-    setSteps(updatedSteps);
-  }
-  if (expandedSteps !== updatedExpandedSteps) {
-    setExpandedSteps(updatedExpandedSteps);
-  }
-  if (currentStepIndex !== updatedCurrentStepIndex) {
-    setCurrentStepIndex(updatedCurrentStepIndex);
-  }
-
   const addStep = () => {
-    if (currentStep.trim()) {
+    if (currentStepInput.trim()) {
       const newStep: TestStep = {
-        id: `step-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        description: currentStep.trim(),
+        id: `step-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+        description: currentStepInput.trim(),
         status: "pending",
       };
-      const newSteps = [...steps, newStep];
-      setSteps(newSteps);
-      setCurrentStep("");
-      setUpdatedSteps(newSteps);
+
+      setTestSteps((prev) => [...prev, newStep]);
+      setCurrentStepInput("");
     }
   };
 
   const removeStep = (id: string) => {
-    const newSteps = steps.filter((step) => step.id !== id);
-    setSteps(newSteps);
-    setUpdatedSteps(newSteps);
-
-    const newExpandedSteps = expandedSteps.filter((stepId) => stepId !== id);
-    setExpandedSteps(newExpandedSteps);
-    setUpdatedExpandedSteps(newExpandedSteps);
+    setTestSteps((prev) => prev.filter((step) => step.id !== id));
+    setExpandedSteps((prev) => prev.filter((stepId) => stepId !== id));
   };
 
   const toggleExpand = (id: string) => {
-    let newExpandedSteps;
-    if (expandedSteps.includes(id)) {
-      newExpandedSteps = expandedSteps.filter((stepId) => stepId !== id);
-    } else {
-      newExpandedSteps = [...expandedSteps, id];
-    }
-    setExpandedSteps(newExpandedSteps);
-    setUpdatedExpandedSteps(newExpandedSteps);
+    setExpandedSteps((prev) =>
+      prev.includes(id) ? prev.filter((stepId) => stepId !== id) : [...prev, id]
+    );
   };
 
-  const viewScreenshot = (screenshotUrl: string) => {};
-
-  const runTests = () => {
-    initiateTests(config);
+  const handleRunTests = () => {
+    if (steps.length === 0) return;
+    runTests(config);
   };
 
   return (
@@ -104,8 +75,8 @@ function TestCreationScreen({ config, onComplete }: TestCreationScreenProps) {
       <div className="flex flex-1 p-4 overflow-hidden sm:p-6 gap-4">
         <div className="flex flex-col w-1/3 overflow-hidden">
           <StepInput
-            currentStep={currentStep}
-            setCurrentStep={setCurrentStep}
+            currentStep={currentStepInput}
+            setCurrentStep={setCurrentStepInput}
             addStep={addStep}
             isRunning={isRunning}
           />
@@ -118,12 +89,11 @@ function TestCreationScreen({ config, onComplete }: TestCreationScreenProps) {
               isRunning={isRunning}
               toggleExpand={toggleExpand}
               removeStep={removeStep}
-              viewScreenshot={viewScreenshot}
             />
           </div>
 
           <TestControls
-            runTests={runTests}
+            runTests={handleRunTests}
             isRunning={isRunning}
             hasSteps={steps.length > 0}
             error={error}

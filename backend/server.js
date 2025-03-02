@@ -5,6 +5,14 @@ const cors = require("cors");
 const { chromium } = require("playwright");
 const { OpenAI } = require("openai");
 const { PLAYWRIGHT_PROMPT } = require("./prompts");
+const fs = require("fs");
+
+// videos & screenshots directories
+["videos", "screenshots"].forEach((dir) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+});
 
 const app = express();
 const server = http.createServer(app);
@@ -31,13 +39,14 @@ io.on("connection", async (socket) => {
   console.log("Client connected:", socket.id);
 
   socket.on("run-tests", async (data) => {
+    if (!data.steps || data.steps.length === 0) {
+      return socket.emit("test-error", { message: "No steps provided" });
+    }
+
     const { apiKey, targetUrl, steps } = data;
 
     try {
-      const openai = new OpenAI({
-        apiKey: apiKey,
-      });
-
+      const openai = new OpenAI({ apiKey });
       const browser = await chromium.launch();
       const context = await browser.newContext({
         recordVideo: { dir: "videos/" },
@@ -59,18 +68,13 @@ io.on("connection", async (socket) => {
         status: "navigating",
         message: `Navigating to ${targetUrl}`,
       });
-
       await page.goto(targetUrl);
 
-      const screenshot = await page.screenshot({ type: "png" });
+      // initial screenshot
+      const initialScreenshot = await page.screenshot({ type: "png" });
       socket.emit("browser-update", {
         status: "ready",
-        screenshot: screenshot.toString("base64"),
-      });
-
-      console.log("browser-update", {
-        status: "ready",
-        screenshot: screenshot.toString("base64"),
+        screenshot: initialScreenshot.toString("base64"),
       });
 
       const stepResults = [];
@@ -87,71 +91,65 @@ io.on("connection", async (socket) => {
           stepIndex: i,
         });
 
-        console.log(`Emitting browser-update for step ${i + 1}`, {
-          status: "running",
-          stepIndex: i,
-        });
-
         try {
           const pageContent = await page.content();
           const htmlSummary =
             pageContent.substring(0, 5000) +
             (pageContent.length > 5000 ? "..." : "");
 
-          const response = await openai.chat.completions.create({
-            model: "gpt-3.5-turbo",
-            messages: [
-              {
-                role: "system",
-                content: PLAYWRIGHT_PROMPT,
-              },
-              {
-                role: "user",
-                content: [
-                  {
-                    type: "text",
-                    text: `Current step to execute: "${step}"                    
-                    Current HTML structure summary (for context):
-                    ${htmlSummary}`,
-                  },
-                ],
-              },
-            ],
-            max_tokens: 500,
-            temperature: 0.2,
-          });
+          let response;
+          try {
+            response = await openai.chat.completions.create({
+              model: "gpt-3.5-turbo",
+              messages: [
+                { role: "system", content: PLAYWRIGHT_PROMPT },
+                {
+                  role: "user",
+                  content: [
+                    {
+                      type: "text",
+                      text: `Current step: "${step}"\nHTML Summary:\n${htmlSummary}`,
+                    },
+                  ],
+                },
+              ],
+              max_tokens: 500,
+              temperature: 0.2,
+            });
+          } catch (error) {
+            throw new Error(`OpenAI API Error: ${error.message}`);
+          }
 
           const code = response.choices[0].message.content.trim();
-
-          console.log(`Generated code for step ${i + 1}:`, code);
 
           const executeStep = new Function(
             "page",
             `
-            return (async () => {
+            return async () => {
               try {
-                await ${code};
+                ${code}
                 return { success: true };
               } catch (error) {
-                console.error("Step execution error:", error.message);
                 return { 
                   success: false, 
-                  error: error.message,
-                  name: error.name 
+                  error: error.message 
                 };
               }
-            })();
+            };
           `
           );
 
-          const result = await executeStep(page);
+          const result = await executeStep(page)();
 
           if (!result.success) {
-            throw new Error(result.error || "Unknown execution error");
+            throw new Error(result.error || "Step execution failed");
           }
 
-          // screenshots in each step
-          const stepScreenshot = await page.screenshot({ type: "png" });
+          // step screenshot
+          const stepScreenshot = await page.screenshot({
+            type: "png",
+            path: `screenshots/${i}.png`,
+          });
 
           stepResults.push({
             passed: true,
@@ -171,53 +169,33 @@ io.on("connection", async (socket) => {
             status: "success",
             error: null,
           });
-          console.log(`Emitting step-update for successful step ${i + 1}`, {
-            index: i,
-            status: "success",
-          });
         } catch (error) {
-          console.error(`Error executing step ${i + 1}:`, error);
-
           allPassed = false;
+          const errorScreenshot = await page.screenshot({ type: "png" });
+          const errorMessage = error.message || error.toString(); // Add this line
+
           stepResults.push({
             passed: false,
             duration: Date.now() - stepStartTime,
-            error: error.message,
-            screenshot: (await page.screenshot({ type: "png" })).toString(
-              "base64"
-            ),
-            code: error.code || "Error executing code",
+            error: errorMessage, // Use here
+            screenshot: errorScreenshot.toString("base64"),
+            code: error.code || "N/A",
           });
 
           socket.emit("browser-update", {
             status: "step-failed",
-            screenshot: (await page.screenshot({ type: "png" })).toString(
-              "base64"
-            ),
+            screenshot: errorScreenshot.toString("base64"),
             stepIndex: i,
-            error: error.message,
+            error: errorMessage, // And here
           });
 
           socket.emit("step-update", {
             index: i,
-            status: error ? "error" : "running",
-            error: error ? error.message : null,
-          });
-          console.log(`Emitting step-update for failed step ${i + 1}`, {
-            index: i,
             status: "error",
-            error: error.message,
+            error: errorMessage, // And here
           });
         }
       }
-
-      console.log("Emitting test-complete with results:", {
-        passed: allPassed,
-        stepResults: stepResults.map((s) => ({
-          passed: s.passed,
-          error: s.error || null,
-        })),
-      });
 
       socket.emit("test-complete", {
         passed: allPassed,
@@ -228,7 +206,7 @@ io.on("connection", async (socket) => {
       await browser.close();
       activeBrowsers.delete(socket.id);
     } catch (error) {
-      console.error("Error running tests:", error);
+      console.error("Global error:", error);
       socket.emit("test-error", { message: error.message });
 
       const browserContext = activeBrowsers.get(socket.id);
@@ -240,22 +218,15 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("stop-test", async () => {
-    console.log("Received stop-test request from client");
-
     const browserContext = activeBrowsers.get(socket.id);
     if (browserContext) {
-      console.log("Closing browser for stopped test");
       await browserContext.browser.close();
       activeBrowsers.delete(socket.id);
       socket.emit("test-error", { message: "Test stopped by user" });
-    } else {
-      console.log("No active browser found to stop");
     }
   });
 
   socket.on("disconnect", async () => {
-    console.log("Client disconnected:", socket.id);
-
     const browserContext = activeBrowsers.get(socket.id);
     if (browserContext) {
       await browserContext.browser.close();

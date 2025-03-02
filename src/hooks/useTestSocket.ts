@@ -4,134 +4,99 @@ import { TestStep } from "../types";
 
 interface UseTestSocketProps {
   steps: TestStep[];
-  expandedSteps: string[];
-  currentStepIndex: number;
   onComplete: (steps: TestStep[], results: any) => void;
 }
 
-export function useTestSocket({
-  steps,
-  expandedSteps,
-  currentStepIndex,
-  onComplete,
-}: UseTestSocketProps) {
+export function useTestSocket({ steps, onComplete }: UseTestSocketProps) {
   const socketRef = useRef<Socket | null>(null);
   const [browserImage, setBrowserImage] = useState<string | null>(null);
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
   const [results, setResults] = useState<any>(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [currentStepIndex, setCurrentStepIndex] = useState(-1);
+  const [testSteps, setTestSteps] = useState<TestStep[]>(steps);
 
-  // Track state locally for hook managemnt
-  const [updatedSteps, setUpdatedSteps] = useState<TestStep[]>(steps);
-  const [updatedExpandedSteps, setUpdatedExpandedSteps] =
-    useState<string[]>(expandedSteps);
-  const [updatedCurrentStepIndex, setUpdatedCurrentStepIndex] =
-    useState<number>(currentStepIndex);
+  // Reference to maintain latest steps without re-renders
+  const stepsRef = useRef(testSteps);
+  useEffect(() => {
+    stepsRef.current = testSteps;
+  }, [testSteps]);
 
   useEffect(() => {
-    setUpdatedSteps(steps);
-  }, [steps]);
-
-  useEffect(() => {
-    setUpdatedExpandedSteps(expandedSteps);
-  }, [expandedSteps]);
-
-  useEffect(() => {
-    setUpdatedCurrentStepIndex(currentStepIndex);
-  }, [currentStepIndex]);
-
-  useEffect(() => {
+    // Initialize socket connection
     socketRef.current = io("http://localhost:3001");
 
-    socketRef.current.on("connect", () => {
-      console.log("Connected to WebSocket server");
-    });
-
-    socketRef.current.on("browser-update", (data) => {
+    const handleBrowserUpdate = (data: any) => {
       if (data.screenshot) {
         setBrowserImage(`data:image/png;base64,${data.screenshot}`);
-
-        if (
-          updatedSteps.length > 0 &&
-          updatedCurrentStepIndex >= 0 &&
-          updatedCurrentStepIndex < updatedSteps.length
-        ) {
-          const newSteps = [...updatedSteps];
-          newSteps[updatedCurrentStepIndex] = {
-            ...newSteps[updatedCurrentStepIndex],
-            screenshotUrl: `data:image/png;base64,${data.screenshot}`,
-          };
-          setUpdatedSteps(newSteps);
-        }
       }
       setStatus(data.status);
-    });
+    };
 
-    socketRef.current.on("test-complete", (data) => {
+    const handleTestComplete = (data: any) => {
       setIsRunning(false);
       setResults(data);
+      setCurrentStepIndex(-1);
 
-      const newSteps = updatedSteps.map((step) => ({
+      console.log(data);
+
+      const updatedSteps = stepsRef.current.map((step, index) => ({
         ...step,
-        status: step.status === "error" ? "error" : "success",
+        status: data.stepResults[index]?.passed ? "success" : "error",
+        error: data.stepResults[index]?.error
+          ? String(data.stepResults[index]?.error)
+          : null,
+        screenshot: data.stepResults[index]?.screenshot || null,
+        code: data.stepResults[index]?.code || null,
+        duration: data.stepResults[index]?.duration || null,
       }));
-      setUpdatedSteps(newSteps);
-      setUpdatedCurrentStepIndex(-1);
 
-      setTimeout(() => {
-        onComplete(newSteps, data);
-      }, 1000);
-    });
+      setTestSteps(updatedSteps);
+      onComplete(updatedSteps, data);
+    };
 
-    socketRef.current.on("test-error", (data) => {
+    const handleTestError = (data: { message: string }) => {
       setError(data.message);
       setIsRunning(false);
-
-      if (
-        updatedCurrentStepIndex >= 0 &&
-        updatedCurrentStepIndex < updatedSteps.length
-      ) {
-        const newSteps = [...updatedSteps];
-        newSteps[updatedCurrentStepIndex] = {
-          ...newSteps[updatedCurrentStepIndex],
-          status: "error",
-          error: data.message,
-        };
-        setUpdatedSteps(newSteps);
-
-        const newExpandedSteps = [
-          ...updatedExpandedSteps,
-          newSteps[updatedCurrentStepIndex].id,
-        ];
-        setUpdatedExpandedSteps(newExpandedSteps);
-      }
-    });
-
-    socketRef.current.on("step-update", (data) => {
-      if (data.index !== undefined && data.status) {
-        const newSteps = [...updatedSteps];
-        if (newSteps[data.index]) {
-          newSteps[data.index] = {
-            ...newSteps[data.index],
-            status: data.status,
-            error: data.error,
-          };
-          setUpdatedSteps(newSteps);
-        }
-        setUpdatedCurrentStepIndex(data.index);
-      }
-    });
-
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-      }
     };
-  }, [updatedSteps, onComplete, updatedExpandedSteps, updatedCurrentStepIndex]);
+
+    const handleStepUpdate = (data: {
+      index: number;
+      status: string;
+      error?: any;
+    }) => {
+      setCurrentStepIndex(data.index);
+      setTestSteps((prev) =>
+        prev.map((step, i) =>
+          i === data.index
+            ? {
+                ...step,
+                status: data.status,
+                error: data.error ? String(data.error) : undefined,
+              }
+            : step
+        )
+      );
+    };
+
+    // Setup event listeners
+    socketRef.current.on("connect", () =>
+      console.log("Connected to WS server")
+    );
+    socketRef.current.on("browser-update", handleBrowserUpdate);
+    socketRef.current.on("test-complete", handleTestComplete);
+    socketRef.current.on("test-error", handleTestError);
+    socketRef.current.on("step-update", handleStepUpdate);
+
+    // Cleanup on unmount
+    return () => {
+      socketRef.current?.disconnect();
+    };
+  }, [onComplete]);
 
   const runTests = (config: { apiKey: string; targetUrl: string }) => {
-    if (updatedSteps.length === 0) {
+    if (testSteps.length === 0) {
       setError("Please add at least one test step");
       return;
     }
@@ -139,19 +104,21 @@ export function useTestSocket({
     setIsRunning(true);
     setError("");
     setStatus("starting");
-    setUpdatedCurrentStepIndex(0);
+    setCurrentStepIndex(0);
 
-    const pendingSteps = updatedSteps.map((step) => ({
+    // Initialize steps with pending status
+    const initialSteps = testSteps.map((step) => ({
       ...step,
       status: "pending" as const,
       error: undefined,
     }));
-    setUpdatedSteps(pendingSteps);
+    setTestSteps(initialSteps);
 
+    // Emit test run event
     socketRef.current?.emit("run-tests", {
       apiKey: config.apiKey,
       targetUrl: config.targetUrl,
-      steps: pendingSteps.map((s) => s.description),
+      steps: initialSteps.map((s) => s.description),
     });
   };
 
@@ -166,13 +133,10 @@ export function useTestSocket({
     status,
     error,
     results,
-    steps: updatedSteps,
-    expandedSteps: updatedExpandedSteps,
-    currentStepIndex: updatedCurrentStepIndex,
+    steps: testSteps,
+    currentStepIndex,
     runTests,
     stopTest,
-    setUpdatedSteps,
-    setUpdatedExpandedSteps,
-    setUpdatedCurrentStepIndex,
+    setTestSteps,
   };
 }
