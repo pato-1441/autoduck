@@ -5,9 +5,9 @@
   "main": "index.js",
   "scripts": {
     "dev": "node server.js",
-    "build": "echo \"Building application...\" && npm run clean && mkdir -p dist && cp -r server.js package.json dist/",
+    "build": "echo \"Building application...\" && npm run clean && mkdir dist && cp -r server.js package.json services utils routes scripts prompts dist/",
     "clean": "rm -rf dist",
-    "start": "pnpm exec playwright install && node server.js",
+    "start": "node scripts/init.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

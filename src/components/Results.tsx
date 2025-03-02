@@ -42,10 +42,12 @@ function ResultsScreen({
     <div className="flex flex-col min-h-screen bg-gray-50">
       <header className="px-4 py-4 bg-white shadow sm:px-6">
         <div className="flex items-center justify-between">
-          <img className="max-w-8 max-h-8" src="/favicon.png" />
-          <h1 className="text-xl font-bold text-gray-800">
-            Autoduck - Results
-          </h1>
+          <div className="flex gap-4 items-center">
+            <img className="max-w-8 max-h-8" src="/favicon.png" />
+            <h1 className="text-xl font-bold text-gray-800">
+              Autoduck - Results
+            </h1>
+          </div>
           <div className="flex items-center space-x-4">
             <span
               className={`px-2 py-1 text-sm font-medium rounded-full ${
